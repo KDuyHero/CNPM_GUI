@@ -1,9 +1,14 @@
 from datetime import date
+from tkinter import *
+import tkinter
+import os
+from PIL import ImageTk, Image
 '''
 kiến nghị: demand
 yêu cầu: request
 phản hồi: response
 '''
+dirname = os.path.dirname(__file__)
 
 
 def _from_rgb(rgb):
@@ -17,6 +22,7 @@ win_h = 700
 win_w = 1000
 
 win_bg = _from_rgb((255, 255, 255))
+selected_bg = "lightblue"
 
 
 # leftFrame_win
@@ -34,7 +40,7 @@ response_demand_bg = _from_rgb((230, 230, 230))
 # Test
 list_kien_nghi = [
     ["title1 dài hơn 20 ký tự ở đây, dàichhnef vẻ vẫn hơi ngắn",
-        "content1 dài lên đi chứ bạn ơi hahahahahahahahah hahaha  hahahaha hahahah"],
+        "conten1 conten1 conten1conten1conten1 conten1 conten1 conten1 conten1 conten1 conten1"],
     ["title2", "Nhập môn công nghệ phần mềm"]
 ]
 

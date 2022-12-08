@@ -4,6 +4,7 @@ try:
 except ImportError:
     import Tkinter as tk     # python 2
     import tkFont as tkfont  # python 2
+from PIL import Image, ImageTk
 
 
 class SampleApp(tk.Tk):
@@ -52,7 +53,7 @@ class StartPage(tk.Frame):
                          font=controller.title_font)
         label.pack(side="top", fill="x", pady=10)
 
-        button1 = tk.Button(self, text="Go to Page One",
+        button1 = tk.Button(self, text="Go", image=img,
                             command=lambda: controller.show_frame("PageOne"))
         button2 = tk.Button(self, text="Go to Page Two",
                             command=lambda: controller.show_frame("PageTwo"))
