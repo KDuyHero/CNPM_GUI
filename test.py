@@ -1,92 +1,49 @@
-try:
-    import tkinter as tk                # python 3
-    from tkinter import font as tkfont  # python 3
-except ImportError:
-    import Tkinter as tk     # python 2
-    import tkFont as tkfont  # python 2
-from PIL import Image, ImageTk
+import tkinter as tk
+from tkinter import ttk
 
 
-class SampleApp(tk.Tk):
+class App(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.geometry("320x80")
+        self.title('Tkinter OptionMenu Widget')
 
-    def __init__(self, *args, **kwargs):
-        tk.Tk.__init__(self, *args, **kwargs)
+        # initialize data
+        self.languages = ('Python', 'JavaScript', 'Java',
+                          'Swift', 'GoLang', 'C#', 'C++', 'Scala')
 
-        self.title_font = tkfont.Font(
-            family='Helvetica', size=18, weight="bold", slant="italic")
+        # set up variable
+        self.option_var = tk.StringVar(self)
 
-        # the container is where we'll stack a bunch of frames
-        # on top of each other, then the one we want visible
-        # will be raised above the others
-        container = tk.Frame(self)
-        container.pack(side="top", fill="both", expand=True)
-        container.grid_rowconfigure(0, weight=1)
-        container.grid_columnconfigure(0, weight=1)
+        # create widget
+        self.create_wigets()
 
-        self.frames = {}
-        # F is one of Frame in tupple
-        for F in (StartPage, PageOne, PageTwo):
-            page_name = F.__name__
-            frame = F(parent=container, controller=self)
-            self.frames[page_name] = frame
+    def create_wigets(self):
+        # padding for widgets using the grid layout
+        paddings = {'padx': 5, 'pady': 5}
 
-            # put all of the pages in the same location;
-            # the one on the top of the stacking order
-            # will be the one that is visible.
-            frame.grid(row=0, column=0, sticky="nsew")
-        self.show_frame("StartPage")
+        # label
+        label = ttk.Label(self,  text='Select your most favorite language:')
+        label.grid(column=0, row=0, sticky=tk.W, **paddings)
 
-    def show_frame(self, page_name):
-        '''Show a frame for the given page name'''
-        frame = self.frames[page_name]
-        frame.tkraise()
+        # option menu
+        option_menu = ttk.OptionMenu(
+            self,
+            self.option_var,
+            self.languages[0],
+            *self.languages,
+            command=self.option_changed)
 
-# Kế thừa từ tk.Frame
+        option_menu.grid(column=1, row=0, sticky=tk.W, **paddings)
 
+        # output label
+        self.output_label = ttk.Label(self, foreground='red')
+        self.output_label.grid(column=0, row=1, sticky=tk.W, **paddings)
 
-class StartPage(tk.Frame):
-
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-        self.controller = controller
-        label = tk.Label(self, text="This is the start page",
-                         font=controller.title_font)
-        label.pack(side="top", fill="x", pady=10)
-
-        button1 = tk.Button(self, text="Go", image=img,
-                            command=lambda: controller.show_frame("PageOne"))
-        button2 = tk.Button(self, text="Go to Page Two",
-                            command=lambda: controller.show_frame("PageTwo"))
-        button1.pack()
-        button2.pack()
-
-
-class PageOne(tk.Frame):
-
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-        self.controller = controller
-        label = tk.Label(self, text="This is page 1",
-                         font=controller.title_font)
-        label.pack(side="top", fill="x", pady=10)
-        button = tk.Button(self, text="Go to the start page",
-                           command=lambda: controller.show_frame("StartPage"))
-        button.pack()
-
-
-class PageTwo(tk.Frame):
-
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-        self.controller = controller
-        label = tk.Label(self, text="This is page 2",
-                         font=controller.title_font)
-        label.pack(side="top", fill="x", pady=10)
-        button = tk.Button(self, text="Go to the start page",
-                           command=lambda: controller.show_frame("StartPage"))
-        button.pack()
+    def option_changed(self, *args):
+        self.output_label['text'] = f'selected {self.option_var.get()}'
 
 
 if __name__ == "__main__":
-    app = SampleApp()
+    app = App()
     app.mainloop()
