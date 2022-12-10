@@ -33,7 +33,7 @@ y = (hs/2) - (config.win_h/2)
 root.geometry(f"{config.win_w}x{config.win_h}+{int(x)}+0")
 
 
-def switch(frame):
+def switch(frame, hostId=""):
     for f in frames:
         for widget in f.winfo_children():
             widget.destroy()
@@ -62,22 +62,22 @@ def switch(frame):
         btn_home_bg = win_bg
         btn_family_bg = win_bg
         btn_demand_bg = win_bg
-        AddPerson()
+        AddPerson(hostId)
     elif (frame == f_fix_info):
         btn_home_bg = win_bg
         btn_family_bg = win_bg
         btn_demand_bg = win_bg
-        FixInfo()
+        FixInfo(hostId)
     elif (frame == f_change_host_person):
         btn_home_bg = win_bg
         btn_family_bg = win_bg
         btn_demand_bg = win_bg
-        ChangeHostPerson()
+        ChangeHostPerson(hostId)
     elif (frame == f_view_detail):
         btn_home_bg = win_bg
         btn_family_bg = win_bg
         btn_demand_bg = win_bg
-        ViewDetail()
+        ViewDetail(hostId)
     elif (frame == f_tach_khau):
         btn_home_bg = win_bg
         btn_family_bg = win_bg
@@ -97,14 +97,23 @@ def switch(frame):
     frame.tkraise()
 
 
+def CheckHostId(hostId):
+    # getAllHoKhau trả về 1 list các tupple chứa các trường => đưa hostId vào 1 tupple để so sánh
+    hostId = (hostId,)
+    allHostId = connectDB.getAllHoKhau()
+    if (hostId in allHostId):
+        return True
+    return False
+
+
 def AuthenticationChange(hostId, message, chosed):
-    if (hostId == "123456"):
+    if (CheckHostId(hostId)):
         if (chosed == "Thêm nhân khẩu"):
-            switch(f_add_person)
+            switch(f_add_person, hostId)
         elif (chosed == "Sửa thông tin nhân khẩu"):
-            switch(f_fix_info)
+            switch(f_fix_info, hostId)
         elif (chosed == "Thay đổi chủ hộ"):
-            switch(f_change_host_person)
+            switch(f_change_host_person, hostId)
         else:
             switch(f_home)
     else:
@@ -112,8 +121,8 @@ def AuthenticationChange(hostId, message, chosed):
 
 
 def AuthenticationDetail(hostId, message):
-    if (hostId == "123456"):
-        switch(f_view_detail)
+    if (CheckHostId(hostId)):
+        switch(f_view_detail, hostId)
     else:
         message['text'] = f"Số hộ khẩu: {hostId} bị sai!. Vui lòng nhập lại"
 
@@ -495,7 +504,7 @@ def AuthenChange():
                       pady=pady, sticky=W, columnspan=2)
 
 
-def AddPerson():
+def AddPerson(hostId):
     # Create a child frame to destroy when no use parent frame
     f_all_add_person = tkinter.Frame(
         f_add_person, highlightbackground="black", highlightthickness=2)
@@ -642,7 +651,8 @@ def AddPerson():
             entryNationality.get(),
             entryJob.get(),
             entryCurrentAddress.get(),
-            dateEntryCurrentDate.get_date().strftime("%m/%d/%y")
+            dateEntryCurrentDate.get_date().strftime("%m/%d/%y"),
+            hostId
         )
         connectDB.InsertTable(datas)
         switch(f_home)
@@ -653,7 +663,7 @@ def AddPerson():
     buttonSubmit.grid(column=0, row=10, padx=padx, pady=pady, columnspan=4)
 
 
-def FixInfo():
+def FixInfo(hostId):
     # Create a child frame to destroy when no use parent frame
     f_all_fix_info = tkinter.Frame(
         f_fix_info, highlightbackground="black", highlightthickness=2)
@@ -667,7 +677,7 @@ def FixInfo():
                   font=font_content).grid(column=0, row=0)
 
 
-def ChangeHostPerson():
+def ChangeHostPerson(hostId):
     # Create a child frame to destroy when no use parent frame
     f_all_change_host_person = tkinter.Frame(
         f_change_host_person, highlightbackground="black", highlightthickness=2)
@@ -708,156 +718,177 @@ def AuthenDetail():
                       pady=pady, sticky=W, columnspan=2)
 
 
-def ViewDetail():
+def ViewDetail(hostId):
+    datas = connectDB.getData(hostId)
+    n = len(datas)
     # Create a child frame to destroy when no use parent frame
     f_all_view_detail = tkinter.Frame(
         f_view_detail, highlightbackground="black", highlightthickness=2)
     f_view_detail.grid_columnconfigure(0, weight=1)
     f_view_detail.grid_rowconfigure(0, weight=1)
-    f_all_view_detail.grid(column=0, row=0, sticky='news', padx=50, pady=20)
+    f_all_view_detail.grid(
+        column=0, row=0, sticky='news', padx=50, pady=20)
 
     f_all_view_detail.grid_columnconfigure(4, weight=1)
 
-    # datas = {
-    #     'relationShip': "Vợ",
-    #     'fullName': "Nguyễn Văn A",
-    #     'otherName': "Không có",
-    #     'birthDay': "15/1/2002",
-    #     'gender': "Male",
-    #     'realAddress': "Thôn Đằng Động, Xã Yên Hồng, Huyện Ý Yên, Tình Nam Định",
-    #     'CCCD': "123456789",
-    #     'ethnic': "Kinh",
-    #     'nationality': "Việt Nam",
-    #     'jobAndOffical': "Sinh viên",
-    #     'currentAddress': "Hà Nội"
-    # }
-    datas = connectDB.getData()[0]
-    # row 0
-    labelRelationShip = tkinter.Label(f_all_view_detail, text="Quan hệ với chủ hộ:",
-                                      font=font_header3, anchor=W)
-    labelRelationShip.grid(row=0, column=0, columnspan=2,
-                           padx=padx, pady=pady, sticky=W)
-    labelShowRelationShip = tkinter.Label(
-        f_all_view_detail, anchor=W, text=datas[0], font=font_content)
-    labelShowRelationShip.grid(row=0, column=2, padx=padx,
-                               pady=pady, sticky=W, columnspan=2)
+    def showDetail(i):
+        if (n == 0):
+            f_all_view_detail.grid_columnconfigure(0, weight=1)
+            f_all_view_detail.grid_rowconfigure(0, weight=1)
+            f_all_view_detail.grid_columnconfigure(4, weight=0)
 
-    # row 1
-    labelFullName = tkinter.Label(
-        f_all_view_detail, text="Họ và tên: ", font=font_content, anchor=W)
-    labelFullName.grid(column=0, row=1, sticky=W,
-                       padx=padx, pady=pady, columnspan=1)
+            tkinter.Label(f_all_view_detail, text="Không có data", fg="red",
+                          font=font_header1).grid(column=0, row=0)
+        else:
+            if (i <= 0):
+                i = 0
+            elif (i >= n-1):
+                i = n-1
+            Detail(i)
 
-    labelShowFullName = tkinter.Label(
-        f_all_view_detail, anchor=W, text=datas[1], font=font_content)
-    labelShowFullName.grid(column=1, row=1, padx=padx,
-                           pady=pady, columnspan=3, sticky=W)
+    def Detail(i):
+        # datas = {
+        #     'relationShip': "Vợ",
+        #     'fullName': "Nguyễn Văn A",
+        #     'otherName': "Không có",
+        #     'birthDay': "15/1/2002",
+        #     'gender': "Male",
+        #     'realAddress': "Thôn Đằng Động, Xã Yên Hồng, Huyện Ý Yên, Tình Nam Định",
+        #     'CCCD': "123456789",
+        #     'ethnic': "Kinh",
+        #     'nationality': "Việt Nam",
+        #     'jobAndOffical': "Sinh viên",
+        #     'currentAddress': "Hà Nội"
+        # }
 
-    # row 2
-    labelOtherName = tkinter.Label(
-        f_all_view_detail, text="Họ và tên gọi khác(Nếu có): ", font=font_content, anchor=W)
-    labelOtherName.grid(column=0, row=2, sticky=W,
-                        padx=padx, pady=pady, columnspan=2)
+        # row 0
+        labelRelationShip = tkinter.Label(f_all_view_detail, text="Quan hệ với chủ hộ:",
+                                          font=font_header3, anchor=W)
+        labelRelationShip.grid(row=0, column=0, columnspan=2,
+                               padx=padx, pady=pady, sticky=W)
+        labelShowRelationShip = tkinter.Label(
+            f_all_view_detail, anchor=W, text=datas[i][0], font=font_content)
+        labelShowRelationShip.grid(row=0, column=2, padx=padx,
+                                   pady=pady, sticky=W, columnspan=2)
 
-    labelShowOtherName = tkinter.Label(
-        f_all_view_detail, anchor=W, text=datas[2], font=font_content)
-    labelShowOtherName.grid(column=2, row=2, padx=padx,
-                            pady=pady, columnspan=2, sticky=W)
-
-    # row 3
-    labelBirthDay = tkinter.Label(
-        f_all_view_detail, text="Ngày sinh: ", font=font_content, anchor=W)
-    labelBirthDay.grid(column=0, row=3, sticky=W,
-                       padx=padx, pady=pady, columnspan=1)
-
-    labelShowBirthDay = Label(
-        f_all_view_detail, anchor=W, text=datas[3], font=font_content)
-    labelShowBirthDay.grid(column=1, row=3, sticky=W,
+        # row 1
+        labelFullName = tkinter.Label(
+            f_all_view_detail, text="Họ và tên: ", font=font_content, anchor=W)
+        labelFullName.grid(column=0, row=1, sticky=W,
                            padx=padx, pady=pady, columnspan=1)
 
-    labelGender = tkinter.Label(
-        f_all_view_detail, text="Giới tính: ", font=font_content, anchor=W)
-    labelGender.grid(column=2, row=3, sticky=W,
-                     padx=padx, pady=pady, columnspan=1)
+        labelShowFullName = tkinter.Label(
+            f_all_view_detail, anchor=W, text=datas[i][1], font=font_content)
+        labelShowFullName.grid(column=1, row=1, padx=padx,
+                               pady=pady, columnspan=3, sticky=W)
 
-    labelShowGender = Label(
-        f_all_view_detail, anchor=W, text=datas[4], font=font_content)
-    labelShowGender.grid(column=3, row=3, sticky=W,
+        # row 2
+        labelOtherName = tkinter.Label(
+            f_all_view_detail, text="Họ và tên gọi khác(Nếu có): ", font=font_content, anchor=W)
+        labelOtherName.grid(column=0, row=2, sticky=W,
+                            padx=padx, pady=pady, columnspan=2)
+
+        labelShowOtherName = tkinter.Label(
+            f_all_view_detail, anchor=W, text=datas[i][2], font=font_content)
+        labelShowOtherName.grid(column=2, row=2, padx=padx,
+                                pady=pady, columnspan=2, sticky=W)
+
+        # row 3
+        labelBirthDay = tkinter.Label(
+            f_all_view_detail, text="Ngày sinh: ", font=font_content, anchor=W)
+        labelBirthDay.grid(column=0, row=3, sticky=W,
+                           padx=padx, pady=pady, columnspan=1)
+
+        labelShowBirthDay = Label(
+            f_all_view_detail, anchor=W, text=datas[i][3], font=font_content)
+        labelShowBirthDay.grid(column=1, row=3, sticky=W,
+                               padx=padx, pady=pady, columnspan=1)
+
+        labelGender = tkinter.Label(
+            f_all_view_detail, text="Giới tính: ", font=font_content, anchor=W)
+        labelGender.grid(column=2, row=3, sticky=W,
                          padx=padx, pady=pady, columnspan=1)
 
-    # row 4
-    labelRealAddress = tkinter.Label(
-        f_all_view_detail, text="Nguyên quán: ", font=font_content, anchor=W)
-    labelRealAddress.grid(column=0, row=4, sticky=W,
-                          padx=padx, pady=pady, columnspan=1)
+        labelShowGender = Label(
+            f_all_view_detail, anchor=W, text=datas[i][4], font=font_content)
+        labelShowGender.grid(column=3, row=3, sticky=W,
+                             padx=padx, pady=pady, columnspan=1)
 
-    labelShowRealAddress = tkinter.Label(
-        f_all_view_detail, anchor=W, text=datas[5], font=font_content)
-    labelShowRealAddress.grid(column=1, row=4, sticky=W,
-                              padx=padx, pady=pady, columnspan=3)
-
-    # row 5
-    labelCCCD = tkinter.Label(
-        f_all_view_detail, text="Số căn cước công dân: ", anchor=W, font=font_content)
-    labelCCCD.grid(column=0, row=5, padx=padx,
-                   pady=pady, sticky=W, columnspan=2)
-
-    labelShowCCCD = tkinter.Label(
-        f_all_view_detail, anchor=W, text=datas[6], font=font_content)
-    labelShowCCCD.grid(column=2, row=5, padx=padx,
-                       pady=pady, sticky=W, columnspan=2)
-
-    # row 6
-    labelEthnic = tkinter.Label(
-        f_all_view_detail, text="Dân tộc: ", font=font_content, anchor=W)
-    labelEthnic.grid(column=0, row=6, sticky=W,
-                     padx=padx, pady=pady, columnspan=1)
-
-    labelShowEthnic = tkinter.Label(
-        f_all_view_detail, anchor=W, text=datas[7], font=font_content)
-    labelShowEthnic.grid(column=1, row=6, sticky=W,
-                         padx=padx, pady=pady, columnspan=1)
-
-    labelNationality = tkinter.Label(
-        f_all_view_detail, text="Quốc tịch: ", font=font_content, anchor=W)
-    labelNationality.grid(column=2, row=6, sticky=W,
-                          padx=padx, pady=pady, columnspan=1)
-    labelShowNationality = tkinter.Label(
-        f_all_view_detail, anchor=W, text=datas[8], font=font_content)
-    labelShowNationality.grid(column=3, row=6, sticky=W,
+        # row 4
+        labelRealAddress = tkinter.Label(
+            f_all_view_detail, text="Nguyên quán: ", font=font_content, anchor=W)
+        labelRealAddress.grid(column=0, row=4, sticky=W,
                               padx=padx, pady=pady, columnspan=1)
 
-    # row 7
-    labelJob = tkinter.Label(
-        f_all_view_detail, text="Nghề nghiệp, nơi làm việc: ", font=font_content, anchor=W)
-    labelJob.grid(column=0, row=7, sticky=W,
-                  padx=padx, pady=pady, columnspan=2)
+        labelShowRealAddress = tkinter.Label(
+            f_all_view_detail, anchor=W, text=datas[i][5], font=font_content)
+        labelShowRealAddress.grid(column=1, row=4, sticky=W,
+                                  padx=padx, pady=pady, columnspan=3)
 
-    labelShowJob = tkinter.Label(
-        f_all_view_detail, anchor=W, text=datas[9], font=font_content)
-    labelShowJob.grid(column=2, row=7, padx=padx,
-                      pady=pady, columnspan=2, sticky=W)
+        # row 5
+        labelCCCD = tkinter.Label(
+            f_all_view_detail, text="Số căn cước công dân: ", anchor=W, font=font_content)
+        labelCCCD.grid(column=0, row=5, padx=padx,
+                       pady=pady, sticky=W, columnspan=2)
 
-    # row 8
-    labelCurrentAddress = tkinter.Label(
-        f_all_view_detail, text="Nơi thường trú trước khi chuyển đến:", font=font_content, anchor=W)
-    labelCurrentAddress.grid(column=0, row=8, sticky=W,
+        labelShowCCCD = tkinter.Label(
+            f_all_view_detail, anchor=W, text=datas[i][6], font=font_content)
+        labelShowCCCD.grid(column=2, row=5, padx=padx,
+                           pady=pady, sticky=W, columnspan=2)
+
+        # row 6
+        labelEthnic = tkinter.Label(
+            f_all_view_detail, text="Dân tộc: ", font=font_content, anchor=W)
+        labelEthnic.grid(column=0, row=6, sticky=W,
+                         padx=padx, pady=pady, columnspan=1)
+
+        labelShowEthnic = tkinter.Label(
+            f_all_view_detail, anchor=W, text=datas[i][7], font=font_content)
+        labelShowEthnic.grid(column=1, row=6, sticky=W,
+                             padx=padx, pady=pady, columnspan=1)
+
+        labelNationality = tkinter.Label(
+            f_all_view_detail, text="Quốc tịch: ", font=font_content, anchor=W)
+        labelNationality.grid(column=2, row=6, sticky=W,
+                              padx=padx, pady=pady, columnspan=1)
+        labelShowNationality = tkinter.Label(
+            f_all_view_detail, anchor=W, text=datas[i][8], font=font_content)
+        labelShowNationality.grid(column=3, row=6, sticky=W,
+                                  padx=padx, pady=pady, columnspan=1)
+
+        # row 7
+        labelJob = tkinter.Label(
+            f_all_view_detail, text="Nghề nghiệp, nơi làm việc: ", font=font_content, anchor=W)
+        labelJob.grid(column=0, row=7, sticky=W,
+                      padx=padx, pady=pady, columnspan=2)
+
+        labelShowJob = tkinter.Label(
+            f_all_view_detail, anchor=W, text=datas[i][9], font=font_content)
+        labelShowJob.grid(column=2, row=7, padx=padx,
+                          pady=pady, columnspan=2, sticky=W)
+
+        # row 8
+        labelCurrentAddress = tkinter.Label(
+            f_all_view_detail, text="Nơi thường trú trước khi chuyển đến:", font=font_content, anchor=W)
+        labelCurrentAddress.grid(column=0, row=8, sticky=W,
+                                 padx=padx, pady=pady, columnspan=2)
+
+        labelShowCurrentAddress = tkinter.Label(
+            f_all_view_detail, anchor=W, text=datas[i][10], font=font_content)
+        labelShowCurrentAddress.grid(
+            column=2, row=8, padx=padx, pady=pady, columnspan=2, sticky=W)
+        # row 10
+        buttonPrePage = tkinter.Button(
+            f_all_view_detail, text="Trang trước", font=font_content, relief="groove", cursor='hand2', command=lambda: showDetail(i-1))
+        buttonPrePage.grid(column=0, row=9, sticky=W,
+                           padx=padx, pady=pady, columnspan=2)
+
+        buttonAfterPage = tkinter.Button(
+            f_all_view_detail, text="Trang sau", font=font_content, relief="groove", cursor='hand2', command=lambda: showDetail(i+1))
+        buttonAfterPage.grid(column=2, row=9, sticky=E,
                              padx=padx, pady=pady, columnspan=2)
 
-    labelShowCurrentAddress = tkinter.Label(
-        f_all_view_detail, anchor=W, text=datas[10], font=font_content)
-    labelShowCurrentAddress.grid(
-        column=2, row=8, padx=padx, pady=pady, columnspan=2, sticky=W)
-    # row 10
-    buttonPrePage = tkinter.Button(
-        f_all_view_detail, text="Trang trước", font=font_content, relief="groove", cursor='hand2', command="")
-    buttonPrePage.grid(column=0, row=9, sticky=W,
-                       padx=padx, pady=pady, columnspan=2)
-
-    buttonAfterPage = tkinter.Button(
-        f_all_view_detail, text="Trang sau", font=font_content, relief="groove", cursor='hand2', command="")
-    buttonAfterPage.grid(column=2, row=9, sticky=E,
-                         padx=padx, pady=pady, columnspan=2)
+    showDetail(0)
 
 
 def TachKhau():

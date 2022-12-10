@@ -10,14 +10,21 @@ mydb = mysql.connector.connect(
 cursor = mydb.cursor()
 
 
+def getAllHoKhau():
+    query = "SELECT * FROM hokhau"
+    cursor.execute(query)
+    return cursor.fetchall()
+
+
 def InsertTable(values):
-    query = "INSERT INTO ho_khau (Relationship, FullName, OtherName,Birthday,Gender, RealAddress, CCCD, Ethnic, Nationality, JobAndOffice, CurrentAddress, CurrentDate) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    query = "INSERT INTO person (Relationship, FullName, OtherName,Birthday,Gender, RealAddress, CCCD, Ethnic, Nationality, JobAndOffice, CurrentAddress, CurrentDate, HOKHAU_id) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
     cursor.execute(query, values)
     mydb.commit()
 
 
-def getData():
-    query = "SELECT * FROM ho_khau"
-    cursor.execute(query)
+def getData(hostId):
+    query = "SELECT * FROM person WHERE HOKHAU_id = %s"
+    val = (hostId,)
+    cursor.execute(query, val)
 
     return cursor.fetchall()
